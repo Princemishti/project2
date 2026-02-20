@@ -1,9 +1,12 @@
 package com.example.CRUD.entity;
 
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
 import java.time.LocalDateTime;
+
 
 @Entity
 @Getter
@@ -25,11 +28,12 @@ public class Comment {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    // Add this field to fix the "No property 'createdAt' found" error
     private LocalDateTime createdAt;
 
     @PrePersist
-    protected void onCreate() {
+    public void prePersist() {
         this.createdAt = LocalDateTime.now();
     }
+
+
 }

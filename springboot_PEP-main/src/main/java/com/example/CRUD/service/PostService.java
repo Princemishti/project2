@@ -6,84 +6,102 @@ import com.example.CRUD.entity.Post;
 import com.example.CRUD.entity.User;
 import com.example.CRUD.repository.PostRepository;
 import com.example.CRUD.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class PostService {
 
-    // create a post
-
-    @Autowired
-    private PostRepository postRepository;
-
+    private final PostRepository postRepository;
+    private final FileUploadService fileUploadService;
+    private final UserRepository userRepository;
 
 
     private PostResponseDto toDto(Post post){
-        String  username = post.getUser().getUsername();
-        PostResponseDto postResponseDto = new PostResponseDto();
-        postResponseDto.setUsername(username);
-        postResponseDto.setContent(post.getContent());
-        postResponseDto.setCreatedAt(post.getCreatedAt());
-        postResponseDto.setMediaUrl(post.getMediaUrl());
-
-        return postResponseDto;
-
+        PostResponseDto dto = new PostResponseDto();
+        dto.setUsername(post.getUser().getUsername());
+        dto.setContent(post.getContent());
+        dto.setCreatedAt(post.getCreatedAt());
+        dto.setMediaUrl(post.getMediaUrl());
+        return dto;
     }
+
 
     public List<PostResponseDto> findAll() {
-        List<Post> posts = postRepository.findAll();
-        List<PostResponseDto> res = posts.stream().map(this::toDto).toList();
-        return res;
-
+        return postRepository.findAll()
+                .stream()
+                .map(this::toDto)
+                .toList();
     }
 
-
-    public List<PostResponseDto> findAllByUserId(Long userId) {
-        List<Post> posts = postRepository.findAllByUserId(userId);
-        return posts.stream().map(this::toDto).toList();
-    }
 
     public PostResponseDto findById(Long id) {
-        Post post =  postRepository.findById(id).get();
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
         return toDto(post);
     }
 
-    public PostResponseDto delete(long id){
-        Post post = postRepository.findById(id).orElseThrow(()-> new RuntimeException("post not found"));
+
+    public PostResponseDto create(String content, MultipartFile file, String username) {
+
+        User user = userRepository.findByUsername(username);
+
+        Post post = new Post();
+        post.setContent(content);
+        post.setUser(user);
+
+        if (file != null && !file.isEmpty()) {
+            String url = fileUploadService.uploadFile(file);
+            post.setMediaUrl(url);
+        }
+
+        postRepository.save(post);
+
+        return toDto(post);
+    }
+
+
+    public PostResponseDto update(Long id, String content,
+                                  MultipartFile file, String username) {
+
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        if (!post.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("You are not allowed to update this post");
+        }
+
+        if (content != null) {
+            post.setContent(content);
+        }
+
+        if (file != null && !file.isEmpty()) {
+            String url = fileUploadService.uploadFile(file);
+            post.setMediaUrl(url);
+        }
+
+        postRepository.save(post);
+
+        return toDto(post);
+    }
+
+
+    public PostResponseDto delete(Long id, String username) {
+
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        if (!post.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("You are not allowed to delete this post");
+        }
+
         postRepository.delete(post);
 
         return toDto(post);
-
     }
-
-    public PostResponseDto create(Post post){
-        postRepository.save(post);
-        return toDto(post) ;
-    }
-
-    public PostResponseDto update(Post post){
-
-        Post oldPost = postRepository.findById(post.getId()).orElseThrow(()-> new RuntimeException("post not found"));
-
-        if(post.getContent() !=null){
-            oldPost.setContent(post.getContent());
-        }
-        if(post.getMediaUrl() !=null){
-            oldPost.setMediaUrl(post.getMediaUrl());
-        }
-
-
-        postRepository.save(post);
-
-        return toDto(post) ;
-    }
-
-
-
-
-
-
 }

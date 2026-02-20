@@ -27,8 +27,8 @@ public class Post {
     @JoinColumn(name = "user_id")
     private User user ;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Like> likes = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL)
+    List<Like> likes  = new ArrayList<>() ;
 
 
     @PrePersist

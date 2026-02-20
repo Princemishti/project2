@@ -3,13 +3,10 @@ package com.example.CRUD.service;
 
 import com.example.CRUD.dto.UserDto;
 import com.example.CRUD.dto.UserResponseDto;
-import com.example.CRUD.entity.Token;
-import com.example.CRUD.entity.UserInfo;
-import com.example.CRUD.entity.VerficationStatus;
+import com.example.CRUD.entity.*;
 import com.example.CRUD.repository.TokenRepository;
 import com.example.CRUD.repository.UserInfoRepository;
 import com.example.CRUD.repository.UserRepository;
-import com.example.CRUD.entity.User;
 import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -79,7 +76,7 @@ public class UserService {
 
         User user   = toEntity(userDto) ;
 
-        user.getUserInfo().setVerificationStatus(VerficationStatus.ONGOING);
+        user.getUserInfo().setRole(Role.ROLE_UNVERIFIED);
 
         Token token = new Token();
         token.setUser(user);

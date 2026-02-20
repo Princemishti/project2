@@ -3,37 +3,62 @@ package com.example.CRUD.controller;
 import com.example.CRUD.entity.Comment;
 import com.example.CRUD.service.CommentService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+
+import com.example.CRUD.auth.JwtUtil;
+import com.example.CRUD.entity.Comment;
+import com.example.CRUD.service.CommentService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/comments")
+@RequestMapping("/comments")
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('USER' , 'ADMIN')")
 public class CommentController {
 
     private final CommentService commentService;
+    private final JwtUtil jwtUtil;
 
-    public CommentController(CommentService commentService) {
-        this.commentService = commentService;
-    }
 
     @PostMapping
     public ResponseEntity<Comment> addComment(
-            @RequestParam Long userId,
             @RequestParam Long postId,
-            @RequestBody String content) {
+            @RequestBody String content,
+            Authentication authentication) {
 
-        Comment comment = commentService.addComment(userId, postId, content);
+        String username = authentication.getName();
+
+        Comment comment = commentService.addComment(username, postId, content);
+
         return ResponseEntity.ok(comment);
     }
+
 
     @PutMapping("/{commentId}")
     public ResponseEntity<Comment> updateComment(
             @PathVariable Long commentId,
-            @RequestParam Long userId,
-            @RequestBody String content) {
+            @RequestBody String content,
+            @RequestHeader("Authorization") String token) {
 
-        Comment updated = commentService.updateComment(commentId, userId, content);
+        token = token.substring(7);
+
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        String username = jwtUtil.extractUsername(token);
+
+        Comment updated = commentService.updateComment(commentId, username, content);
+
         return ResponseEntity.ok(updated);
     }
 
@@ -41,10 +66,13 @@ public class CommentController {
     @DeleteMapping("/{commentId}")
     public ResponseEntity<String> deleteComment(
             @PathVariable Long commentId,
-            @RequestParam Long userId,
-            @RequestParam(defaultValue = "false") boolean isAdmin) {
+            Authentication authentication) {
 
-        commentService.deleteComment(commentId, userId, isAdmin);
+
+
+        String username = authentication.getName();
+        commentService.deleteComment(commentId, username);
+
         return ResponseEntity.ok("Comment deleted successfully");
     }
 
@@ -53,8 +81,7 @@ public class CommentController {
     public ResponseEntity<List<Comment>> getCommentsByPost(
             @PathVariable Long postId) {
 
-        List<Comment> comments = commentService.getCommentsByPost(postId);
-        return ResponseEntity.ok(comments);
+        return ResponseEntity.ok(commentService.getCommentsByPost(postId));
     }
 
 
@@ -62,7 +89,6 @@ public class CommentController {
     public ResponseEntity<Long> countComments(
             @PathVariable Long postId) {
 
-        long count = commentService.countComments(postId);
-        return ResponseEntity.ok(count);
+        return ResponseEntity.ok(commentService.countComments(postId));
     }
 }

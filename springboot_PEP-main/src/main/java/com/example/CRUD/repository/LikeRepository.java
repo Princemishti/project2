@@ -1,6 +1,8 @@
 package com.example.CRUD.repository;
 
 import com.example.CRUD.entity.Like;
+import com.example.CRUD.entity.Post;
+import com.example.CRUD.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
 
@@ -15,7 +17,9 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
         long countByPostId(Long postId);
 
-        boolean existsByUserIdAndPostId(Long userId, Long postId);
 
-        void deleteByUserIdAndPostId(Long userId, Long postId);
+
+        Optional<Like> findByUserAndPost(User user, Post post);
+
+        boolean existsByUserAndPost(User user, Post post);
 }

@@ -1,6 +1,7 @@
 package com.example.CRUD.controller;
 
 
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -9,36 +10,53 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
+import com.example.CRUD.auth.JwtUtil;
+import com.example.CRUD.service.LikeService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 @RestController
 @RequestMapping("/like")
+@RequiredArgsConstructor
 public class LikeController {
 
-    @Autowired
-    private LikeService likeService;
+    private final LikeService likeService;
+    private final JwtUtil jwtUtil;
+
 
     @PostMapping("/toggle")
     public ResponseEntity<String> toggleLike(
-            @RequestParam Long userId,
-            @RequestParam Long postId) {
+            @RequestParam Long postId,
+            Authentication authentication) {
 
-        String response = likeService.toggleLike(userId, postId);
+
+
+        String username = authentication.getName();
+
+        String response = likeService.toggleLike(username, postId);
+
         return ResponseEntity.ok(response);
     }
 
+
     @GetMapping("/count/{postId}")
     public ResponseEntity<Long> getLikeCount(@PathVariable Long postId) {
-
-        long count = likeService.getLikeCount(postId);
-        return ResponseEntity.ok(count);
+        return ResponseEntity.ok(likeService.getLikeCount(postId));
     }
 
 
     @GetMapping("/is-liked")
     public ResponseEntity<Boolean> isLiked(
-            @RequestParam Long userId,
-            @RequestParam Long postId) {
+            @RequestParam Long postId,
+            Authentication authentication) {
 
-        boolean liked = likeService.isLiked(userId, postId);
+
+        String username = authentication.getName();
+
+        boolean liked = likeService.isLiked(username, postId);
+
         return ResponseEntity.ok(liked);
     }
 }

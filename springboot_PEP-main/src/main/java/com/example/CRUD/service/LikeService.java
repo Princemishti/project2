@@ -7,53 +7,53 @@ import com.example.CRUD.entity.User;
 import com.example.CRUD.repository.LikeRepository;
 import com.example.CRUD.repository.PostRepository;
 import com.example.CRUD.repository.UserRepository;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class LikeService {
 
-    @Autowired
-    private LikeRepository likeRepository;
-    @Autowired
-    private  UserRepository userRepository;
-    @Autowired
-    private  PostRepository postRepository;
+    private final LikeRepository likeRepository;
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
 
-    @Transactional
-    public String toggleLike(Long userId, Long postId) {
 
-        Optional<Like> existing =
-                likeRepository.findByUserIdAndPostId(userId, postId);
+    public String toggleLike(String username, Long postId) {
 
-        if (existing.isPresent()) {
-            likeRepository.delete(existing.get());
-            return "Post unliked";
-        }
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+        User user = userRepository.findByUsername(username);
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        Like like = new Like();
-        like.setUser(user);
-        like.setPost(post);
+        Optional<Like> existingLike =
+                likeRepository.findByUserAndPost(user, post);
 
-        likeRepository.save(like);
-
-        return "Post liked";
+        if (existingLike.isPresent()) {
+            likeRepository.delete(existingLike.get());
+            return "Unliked";
+        } else {
+            Like like = new Like();
+            like.setUser(user);
+            like.setPost(post);
+            likeRepository.save(like);
+            return "Liked";
+        }
     }
+
 
     public long getLikeCount(Long postId) {
         return likeRepository.countByPostId(postId);
     }
 
-    public boolean isLiked(Long userId, Long postId) {
-        return likeRepository.existsByUserIdAndPostId(userId, postId);
+
+    public boolean isLiked(String username, Long postId) {
+
+        User user = userRepository.findByUsername(username);
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        return likeRepository.existsByUserAndPost(user, post);
     }
 }

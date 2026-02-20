@@ -4,6 +4,7 @@ package com.example.CRUD.controller;
 import com.example.CRUD.auth.JwtUtil;
 import com.example.CRUD.dto.LoginRequestDto;
 import com.example.CRUD.dto.UserDto;
+import com.example.CRUD.entity.Role;
 import com.example.CRUD.entity.Token;
 import com.example.CRUD.entity.User;
 import com.example.CRUD.entity.VerficationStatus;
@@ -64,12 +65,12 @@ public class AuthController {
     @GetMapping("/verify")
     public ResponseEntity<String> verify(@RequestParam String token) {
 
-      Token t  = tokenRepository.findByToken(token) ;
-      User user = t.getUser() ;
-      user.getUserInfo().setVerificationStatus(VerficationStatus.VERIFIED);
+        Token t  = tokenRepository.findByToken(token) ;
+        User user = t.getUser() ;
+        user.getUserInfo().setRole(Role.ROLE_USER);
 
 
-      return ResponseEntity.ok("User is verified") ;
+        return ResponseEntity.ok("User is verified") ;
 
     }
 }
